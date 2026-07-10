@@ -1,0 +1,6 @@
+{
+  "name": "ToonStream API Scraper",
+  "description": "An API and frontend interface to scrape and search ToonStream using Axios and Cheerio.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
