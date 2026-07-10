@@ -4,7 +4,6 @@ import axios from "axios";
 import * as cheerio from "cheerio";
 import path from "path";
 import crypto from "crypto";
-import { createServer as createViteServer } from "vite";
 
 const app = express();
 const PORT = 3000;
@@ -1404,17 +1403,19 @@ app.use(express.json());
   });
 
   // Vite middleware for development / production serving
-  if (process.env.NODE_ENV !== "production") {
-    createViteServer({
-      server: { middlewareMode: true },
-      appType: "spa",
-    }).then((vite) => {
-      app.use(vite.middlewares);
-      if (!process.env.VERCEL) {
+  if (process.env.NODE_ENV !== "production" && !process.env.VERCEL) {
+    import("vite").then(({ createServer: createViteServer }) => {
+      createViteServer({
+        server: { middlewareMode: true },
+        appType: "spa",
+      }).then((vite) => {
+        app.use(vite.middlewares);
         app.listen(PORT, "0.0.0.0", () => {
           console.log(`Server running on http://localhost:${PORT}`);
         });
-      }
+      });
+    }).catch((err) => {
+      console.error("Failed to load Vite server dynamically:", err);
     });
   } else {
     const distPath = path.join(process.cwd(), "dist");
