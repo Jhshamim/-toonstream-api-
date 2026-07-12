@@ -6,7 +6,7 @@
  */
 
 import React, { useState, useEffect, useRef } from "react";
-import { Loader2, Send, Play, Shield, Globe, Info, CheckCircle, AlertTriangle, HelpCircle, Activity } from "lucide-react";
+import { Loader2, Send, Play, Shield, Globe, Info, CheckCircle, AlertTriangle, HelpCircle, Activity, Copy, Check } from "lucide-react";
 import Hls from "hls.js";
 
 type TabType = "endpoints" | "player" | "probe";
@@ -40,6 +40,7 @@ export default function App() {
   const [probing, setProbing] = useState(false);
   const [probeResults, setProbeResults] = useState<any[] | null>(null);
   const [probeError, setProbeError] = useState<string | null>(null);
+  const [copiedUrl, setCopiedUrl] = useState<string | null>(null);
 
   // Auto-fill states helper
   const handleUseInPlayer = (url: string) => {
@@ -47,6 +48,14 @@ export default function App() {
     setPlayerUrl(url);
     setProbeUrl(url);
     setActiveTab("player");
+  };
+
+  const handleCopyText = (text: string) => {
+    navigator.clipboard.writeText(text);
+    setCopiedUrl(text);
+    setTimeout(() => {
+      setCopiedUrl(null);
+    }, 2000);
   };
 
   const handlePlayHlsStream = (url: string, mode: "proxied" | "direct" = "proxied") => {
@@ -57,9 +66,12 @@ export default function App() {
     setProbeUrl(url);
     
     if (mode === "proxied") {
-      let proxiedUrl = `/api/proxy/stream?url=${encodeURIComponent(url)}`;
-      if (customReferer.trim()) proxiedUrl += `&referer=${encodeURIComponent(customReferer.trim())}`;
-      if (customOrigin.trim()) proxiedUrl += `&origin=${encodeURIComponent(customOrigin.trim())}`;
+      let proxiedUrl = url;
+      if (!url.includes("/api/proxy/stream")) {
+        proxiedUrl = `/api/proxy/stream?url=${encodeURIComponent(url)}`;
+        if (customReferer.trim()) proxiedUrl += `&referer=${encodeURIComponent(customReferer.trim())}`;
+        if (customOrigin.trim()) proxiedUrl += `&origin=${encodeURIComponent(customOrigin.trim())}`;
+      }
       setActiveStreamUrl(proxiedUrl);
     } else {
       setActiveStreamUrl(url);
@@ -613,6 +625,30 @@ export default function App() {
                               </button>
                             )}
                           </div>
+                          {srv.proxiedStreamUrl && (
+                            <div className="bg-gray-950/80 p-2 rounded border border-gray-800 flex flex-col gap-1.5 mt-2">
+                              <span className="text-[9px] font-bold text-gray-500 uppercase tracking-wider">Universal External Player Link (for VLC / your site)</span>
+                              <div className="flex items-center justify-between gap-2">
+                                <span className="text-[10px] text-gray-400 font-mono truncate flex-1" title={srv.proxiedStreamUrl}>
+                                  {srv.proxiedStreamUrl}
+                                </span>
+                                <button
+                                  onClick={() => handleCopyText(srv.proxiedStreamUrl)}
+                                  className={`text-[9px] px-2 py-1 rounded font-bold transition-all shrink-0 flex items-center gap-1 ${copiedUrl === srv.proxiedStreamUrl ? "bg-emerald-600/20 text-emerald-400 border border-emerald-500/30" : "bg-gray-850 hover:bg-gray-800 text-gray-300 border border-gray-700/60"}`}
+                                >
+                                  {copiedUrl === srv.proxiedStreamUrl ? (
+                                    <>
+                                      <CheckCircle size={10} /> Copied
+                                    </>
+                                  ) : (
+                                    <>
+                                      <Copy size={10} /> Copy Link
+                                    </>
+                                  )}
+                                </button>
+                              </div>
+                            </div>
+                          )}
                         </div>
                       ))}
                     </div>

@@ -501,6 +501,10 @@ app.use(express.json());
     const targetUrl = req.query.url as string;
     if (!targetUrl) return res.status(400).send("Missing url parameter");
 
+    const protocol = req.headers['x-forwarded-proto'] || req.protocol || 'https';
+    const host = req.headers.host || req.get('host') || 'localhost:3000';
+    const baseUrl = `${protocol}://${host}`;
+
     try {
       const urlObj = new URL(targetUrl);
       let referer = `https://${urlObj.hostname}/`;
@@ -633,7 +637,7 @@ app.use(express.json());
             trimmedLine = trimmedLine.replace(/URI="([^"]+)"/g, (match, p1) => {
               try {
                 const absoluteUrl = new URL(p1, targetUrl).toString();
-                return `URI="/api/proxy/stream?url=${encodeURIComponent(absoluteUrl)}${customParams}"`;
+                return `URI="${baseUrl}/api/proxy/stream?url=${encodeURIComponent(absoluteUrl)}${customParams}"`;
               } catch (e) {
                 return match;
               }
@@ -641,7 +645,7 @@ app.use(express.json());
             trimmedLine = trimmedLine.replace(/URI=([^,\s"]+)/g, (match, p1) => {
               try {
                 const absoluteUrl = new URL(p1, targetUrl).toString();
-                return `URI="/api/proxy/stream?url=${encodeURIComponent(absoluteUrl)}${customParams}"`;
+                return `URI="${baseUrl}/api/proxy/stream?url=${encodeURIComponent(absoluteUrl)}${customParams}"`;
               } catch (e) {
                 return match;
               }
@@ -651,7 +655,7 @@ app.use(express.json());
             trimmedLine = trimmedLine.replace(/(https?:\/\/[^\s,"]+)/g, (match) => {
               try {
                 const absoluteUrl = new URL(match, targetUrl).toString();
-                return `/api/proxy/stream?url=${encodeURIComponent(absoluteUrl)}${customParams}`;
+                return `${baseUrl}/api/proxy/stream?url=${encodeURIComponent(absoluteUrl)}${customParams}`;
               } catch (e) {
                 return match;
               }
@@ -663,7 +667,7 @@ app.use(express.json());
           // If line is not a comment, it's a URL or path
           try {
             const absoluteUrl = new URL(trimmedLine, targetUrl).toString();
-            return `/api/proxy/stream?url=${encodeURIComponent(absoluteUrl)}${customParams}`;
+            return `${baseUrl}/api/proxy/stream?url=${encodeURIComponent(absoluteUrl)}${customParams}`;
           } catch (e) {
             return line;
           }
@@ -1162,6 +1166,10 @@ app.use(express.json());
     const requestedServer = req.query.server as string;
     const requestedLang = req.query.lang as string;
 
+    const protocol = req.headers['x-forwarded-proto'] || req.protocol || 'https';
+    const host = req.headers.host || req.get('host') || 'localhost:3000';
+    const baseUrl = `${protocol}://${host}`;
+
     if (!id) {
       return res.status(400).json({ success: false, error: "Missing id parameter" });
     }
@@ -1346,6 +1354,7 @@ app.use(express.json());
             name: matchedServer.name,
             number: matchedServer.number,
             streamUrl: resObj.streamUrl,
+            proxiedStreamUrl: resObj.streamUrl ? `${baseUrl}/api/proxy/stream?url=${encodeURIComponent(resObj.streamUrl)}` : "",
             iframeUrl: resObj.iframeUrl,
             originalUrl: resObj.originalUrl,
             language: matchedServer.tabLabel
@@ -1358,6 +1367,7 @@ app.use(express.json());
             serverName: matchedServer.name,
             languageLabel: matchedServer.tabLabel,
             streamUrl: resObj.streamUrl,
+            proxiedStreamUrl: resObj.streamUrl ? `${baseUrl}/api/proxy/stream?url=${encodeURIComponent(resObj.streamUrl)}` : "",
             iframeUrl: resObj.iframeUrl,
             originalUrl: resObj.originalUrl,
             servers: [singleResolvedServer]
@@ -1379,6 +1389,7 @@ app.use(express.json());
             name: srv.name,
             number: srv.number,
             streamUrl: resObj.streamUrl,
+            proxiedStreamUrl: resObj.streamUrl ? `${baseUrl}/api/proxy/stream?url=${encodeURIComponent(resObj.streamUrl)}` : "",
             iframeUrl: resObj.iframeUrl,
             originalUrl: resObj.originalUrl
           };
